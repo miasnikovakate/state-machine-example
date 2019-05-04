@@ -1,0 +1,10 @@
+### IDEA project files ###
+.idea
+*.ipr
+*.iws
+*.iml
+
+### Java ###
+target
+plugin
+transaction-logs
