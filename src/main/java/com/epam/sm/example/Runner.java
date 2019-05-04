@@ -1,5 +1,12 @@
 package com.epam.sm.example;
 
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.FSM;
+import akka.actor.Props;
+import com.epam.sm.example.akka.AkkaStateMachine;
+import com.epam.sm.example.akka.OrderMessage;
+import com.epam.sm.example.akka.TransitionSubscriber;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
 import com.epam.sm.example.squirrel.SquirrelStateMachine;
@@ -15,8 +22,7 @@ import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.stereotype.Component;
 
-import static com.epam.sm.example.model.DeliveryType.SERVICE;
-import static com.epam.sm.example.model.DeliveryType.SHOP;
+import static com.epam.sm.example.model.DeliveryType.*;
 import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
 
 @Slf4j
@@ -30,7 +36,8 @@ public class Runner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
 //        runSpringStateMachine();
-        runSquirrelStateMachine();
+//        runSquirrelStateMachine();
+        runAkkaStateMachine();
     }
 
     private void runSpringStateMachine() {
@@ -65,5 +72,28 @@ public class Runner implements ApplicationRunner {
         squirrelStateMachine.fire(OrderEvent.COMPLETE);
 
         squirrelStateMachine.fire(OrderEvent.FULFILL);
+    }
+
+    private void runAkkaStateMachine() {
+        ActorSystem system = ActorSystem.create("state-machine-example");
+        ActorRef stateMachine = system.actorOf(Props.create(AkkaStateMachine.class)); // TODO: creator?
+        ActorRef transitionSubscriber = system.actorOf(Props.create(TransitionSubscriber.class));
+        stateMachine.tell(new FSM.SubscribeTransitionCallBack(transitionSubscriber), null);
+
+        stateMachine.tell(OrderEvent.SUBMIT, null);
+
+        stateMachine.tell(OrderEvent.PAY, null);
+
+        stateMachine.tell(OrderEvent.READY, null);
+
+        stateMachine.tell(OrderMessage.builder()
+                        .event(OrderEvent.READY)
+                        .addVariable(DELIVERY_TYPE, MAIL)
+                        .build(),
+                null);
+
+        stateMachine.tell(OrderEvent.COMPLETE, null);
+
+        stateMachine.tell(OrderEvent.FULFILL, null);
     }
 }
