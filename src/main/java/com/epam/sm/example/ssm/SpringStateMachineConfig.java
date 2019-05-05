@@ -6,6 +6,7 @@ import com.epam.sm.example.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
@@ -18,9 +19,6 @@ import org.springframework.statemachine.state.State;
 
 import java.util.EnumSet;
 import java.util.Objects;
-
-import static com.epam.sm.example.model.OrderEvent.*;
-import static com.epam.sm.example.model.OrderState.*;
 
 @Slf4j
 @Configuration
@@ -40,49 +38,48 @@ public class SpringStateMachineConfig extends EnumStateMachineConfigurerAdapter<
     public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
         states
                 .withStates()
-                .initial(CREATED)
+                .initial(OrderState.CREATED)
                 .states(EnumSet.allOf(OrderState.class))
-                .choice(DELIVERY_CHOICE);
+                .choice(OrderState.DELIVERY_CHOICE);
     }
 
     @Override
     public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions) throws Exception {
-        transitions
-                .withExternal()
-                .source(CREATED).target(SUBMITTED).event(SUBMIT)
+        transitions.withExternal()
+                .source(OrderState.CREATED).target(OrderState.SUBMITTED).event(OrderEvent.SUBMIT).action(submitAction())
                 .and()
                 .withExternal()
-                .source(SUBMITTED).target(PAID).event(PAY)
+                .source(OrderState.SUBMITTED).target(OrderState.PAID).event(OrderEvent.PAY)
                 .and()
                 .withExternal()
-                .source(SUBMITTED).target(CANCELLED).event(CANCEL)
+                .source(OrderState.SUBMITTED).target(OrderState.CANCELLED).event(OrderEvent.CANCEL)
                 .and()
                 .withExternal()
-                .source(PAID).target(PROCESSING)
+                .source(OrderState.PAID).target(OrderState.PROCESSING)
                 .and()
                 .withExternal()
-                .source(PROCESSING).target(DELIVERY_CHOICE).event(READY)
+                .source(OrderState.PROCESSING).target(OrderState.DELIVERY_CHOICE).event(OrderEvent.READY)
                 .and()
                 .withChoice()
-                .source(DELIVERY_CHOICE)
-                .first(MAIL_DELIVERY, isMailDeliveryType())
-                .then(SERVICE_DELIVERY, isDeliveryServiceDeliveryType())
-                .last(DELIVERY_TO_SHOP)
+                .source(OrderState.DELIVERY_CHOICE)
+                .first(OrderState.MAIL_DELIVERY, isMailDeliveryType())
+                .then(OrderState.SERVICE_DELIVERY, isDeliveryServiceDeliveryType())
+                .last(OrderState.DELIVERY_TO_SHOP)
                 .and()
                 .withExternal()
-                .source(MAIL_DELIVERY).target(DELIVERED).event(COMPLETE)
+                .source(OrderState.MAIL_DELIVERY).target(OrderState.DELIVERED).event(OrderEvent.COMPLETE)
                 .and()
                 .withExternal()
-                .source(SERVICE_DELIVERY).target(DELIVERED).event(COMPLETE)
+                .source(OrderState.SERVICE_DELIVERY).target(OrderState.DELIVERED).event(OrderEvent.COMPLETE)
                 .and()
                 .withExternal()
-                .source(DELIVERY_TO_SHOP).target(DELIVERED).event(COMPLETE)
+                .source(OrderState.DELIVERY_TO_SHOP).target(OrderState.DELIVERED).event(OrderEvent.COMPLETE)
                 .and()
                 .withExternal()
-                .source(DELIVERED).target(FULFILLED).event(FULFILL)
+                .source(OrderState.DELIVERED).target(OrderState.FULFILLED).event(OrderEvent.FULFILL)
                 .and()
                 .withExternal()
-                .source(DELIVERED).target(CANCELLED).event(CANCEL);
+                .source(OrderState.DELIVERED).target(OrderState.CANCELLED).event(OrderEvent.CANCEL);
     }
 
     @Bean
@@ -110,6 +107,12 @@ public class SpringStateMachineConfig extends EnumStateMachineConfigurerAdapter<
                     log.info("State changed from {} to {}", from.getId(), to.getId());
                 }
             }
+        };
+    }
+
+    @Bean
+    public Action<OrderState, OrderEvent> submitAction() {
+        return context -> {
         };
     }
 

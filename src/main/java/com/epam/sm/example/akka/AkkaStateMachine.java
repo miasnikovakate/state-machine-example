@@ -16,6 +16,7 @@ public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
 
         when(OrderState.CREATED,
                 matchEventEquals(OrderEvent.SUBMIT, (event, data) -> goTo(OrderState.SUBMITTED)));
+        onTransition(matchState(OrderState.CREATED, OrderState.SUBMITTED, () -> submitAction(stateData())));
 
         when(OrderState.SUBMITTED,
                 matchEventEquals(OrderEvent.PAY, (event, data) -> goTo(OrderState.PAID))
@@ -52,5 +53,8 @@ public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
 
         when(OrderState.FULFILLED, NullFunction());
         when(OrderState.CANCELLED, NullFunction());
+    }
+
+    private void submitAction(AkkaData data) {
     }
 }

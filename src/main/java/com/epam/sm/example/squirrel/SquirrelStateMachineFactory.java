@@ -31,7 +31,7 @@ public class SquirrelStateMachineFactory {
 
     public SquirrelStateMachine getSquirrelStateMachine() {
         builder.externalTransition()
-                .from(OrderState.CREATED).to(OrderState.SUBMITTED).on(OrderEvent.SUBMIT);
+                .from(OrderState.CREATED).to(OrderState.SUBMITTED).on(OrderEvent.SUBMIT).callMethod("submitAction");
 
         builder.externalTransition()
                 .from(OrderState.SUBMITTED).to(OrderState.PAID).on(OrderEvent.PAY);
