@@ -4,13 +4,16 @@ import akka.actor.AbstractFSM;
 import com.epam.sm.example.model.DeliveryType;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 
 import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
 
+@Slf4j
 public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
-    {
+
+    public AkkaStateMachine() {
         startWith(OrderState.CREATED, new AkkaData() {
         });
 
@@ -53,6 +56,11 @@ public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
 
         when(OrderState.FULFILLED, NullFunction());
         when(OrderState.CANCELLED, NullFunction());
+
+        whenUnhandled(matchAnyEvent((event, state) -> {
+            log.warn("event - {}, state - {}", event, stateName());
+            return stay();
+        }));
     }
 
     private void submitAction(AkkaData data) {

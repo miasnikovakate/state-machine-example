@@ -35,12 +35,13 @@ public class Runner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-//        runSpringStateMachine();
-//        runSquirrelStateMachine();
+        runSpringStateMachine();
+        runSquirrelStateMachine();
         runAkkaStateMachine();
     }
 
     private void runSpringStateMachine() {
+        log.info("---Spring State Machine---");
         StateMachine<OrderState, OrderEvent> stateMachine = stateMachineFactory.getStateMachine();
         stateMachine.sendEvent(OrderEvent.SUBMIT);
 
@@ -58,6 +59,7 @@ public class Runner implements ApplicationRunner {
     }
 
     private void runSquirrelStateMachine() {
+        log.info("---Squirrel State Machine---");
         SquirrelStateMachine squirrelStateMachine = squirrelStateMachineFactory.getSquirrelStateMachine();
         squirrelStateMachine.fire(OrderEvent.SUBMIT);
 
@@ -75,8 +77,9 @@ public class Runner implements ApplicationRunner {
     }
 
     private void runAkkaStateMachine() {
+        log.info("---Akka State Machine---");
         ActorSystem system = ActorSystem.create("state-machine-example");
-        ActorRef stateMachine = system.actorOf(Props.create(AkkaStateMachine.class)); // TODO: creator?
+        ActorRef stateMachine = system.actorOf(Props.create(AkkaStateMachine.class, AkkaStateMachine::new));
         ActorRef transitionSubscriber = system.actorOf(Props.create(TransitionSubscriber.class));
         stateMachine.tell(new FSM.SubscribeTransitionCallBack(transitionSubscriber), null);
 

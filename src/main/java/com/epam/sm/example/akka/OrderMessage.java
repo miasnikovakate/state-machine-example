@@ -4,10 +4,12 @@ import com.epam.sm.example.model.OrderEvent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@ToString
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class OrderMessage {
