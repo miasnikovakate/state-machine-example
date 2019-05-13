@@ -6,5 +6,9 @@ public enum OrderEvent {
     READY,
     COMPLETE,
     CANCEL,
-    FULFILL
+    FULFILL,
+
+    PR_1_BOOK,
+    PR_2_ORDER,
+    PR_2_COMPLETE
 }

@@ -1,5 +1,10 @@
 package com.epam.sm.example;
 
+import static com.epam.sm.example.model.DeliveryType.MAIL;
+import static com.epam.sm.example.model.DeliveryType.SERVICE;
+import static com.epam.sm.example.model.DeliveryType.SHOP;
+import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
+
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.FSM;
@@ -22,9 +27,6 @@ import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.stereotype.Component;
 
-import static com.epam.sm.example.model.DeliveryType.*;
-import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -36,16 +38,28 @@ public class Runner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         runSpringStateMachine();
-        runSquirrelStateMachine();
-        runAkkaStateMachine();
+//        runSquirrelStateMachine();
+//        runAkkaStateMachine();
     }
 
     private void runSpringStateMachine() {
         log.info("---Spring State Machine---");
         StateMachine<OrderState, OrderEvent> stateMachine = stateMachineFactory.getStateMachine();
-        stateMachine.sendEvent(OrderEvent.SUBMIT);
+//        stateMachine.sendEvent(OrderEvent.SUBMIT);
+        waitForActionExecution(stateMachine, OrderEvent.SUBMIT, OrderState.SUBMITTED);
 
-        stateMachine.sendEvent(OrderEvent.PAY);
+//        stateMachine.sendEvent(OrderEvent.PAY);
+        waitForActionExecution(stateMachine, OrderEvent.PAY, OrderState.PROCESSING);
+
+        log.info("Current State: {}", stateMachine.getState());
+        stateMachine.sendEvent(OrderEvent.PR_2_ORDER);
+
+        log.info("State Machine Complete: {}", stateMachine.isComplete());
+        log.info("Current State: {}", stateMachine.getState().getId());
+
+        while (stateMachine.getState().getId() != OrderState.PACKAGED) {
+//            log.info("Current State - {}", stateMachine.getState().getId());
+        }
 
         Message<OrderEvent> readyMessage = MessageBuilder
                 .withPayload(OrderEvent.READY)
@@ -57,6 +71,14 @@ public class Runner implements ApplicationRunner {
 
         stateMachine.sendEvent(OrderEvent.FULFILL);
     }
+
+    private void waitForActionExecution(StateMachine<OrderState, OrderEvent> stateMachine, OrderEvent event, OrderState state) {
+        stateMachine.sendEvent(event);
+        while (stateMachine.getState().getId() != state) {
+            log.info("Event - {}. Current State - {}", event, stateMachine.getState().getId());
+        }
+    }
+
 
     private void runSquirrelStateMachine() {
         log.info("---Squirrel State Machine---");
