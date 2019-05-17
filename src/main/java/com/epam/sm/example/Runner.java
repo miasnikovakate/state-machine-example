@@ -1,5 +1,10 @@
 package com.epam.sm.example;
 
+import static com.epam.sm.example.model.DeliveryType.MAIL;
+import static com.epam.sm.example.model.DeliveryType.SERVICE;
+import static com.epam.sm.example.model.DeliveryType.SHOP;
+import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
+
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.FSM;
@@ -21,9 +26,6 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.stereotype.Component;
-
-import static com.epam.sm.example.model.DeliveryType.*;
-import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
 
 @Slf4j
 @Component
@@ -83,20 +85,20 @@ public class Runner implements ApplicationRunner {
         ActorRef transitionSubscriber = system.actorOf(Props.create(TransitionSubscriber.class));
         stateMachine.tell(new FSM.SubscribeTransitionCallBack(transitionSubscriber), null);
 
-        stateMachine.tell(OrderEvent.SUBMIT, null);
+        stateMachine.tell(OrderEvent.SUBMIT, ActorRef.noSender());
 
-        stateMachine.tell(OrderEvent.PAY, null);
+        stateMachine.tell(OrderEvent.PAY, ActorRef.noSender());
 
-        stateMachine.tell(OrderEvent.READY, null);
+        stateMachine.tell(OrderEvent.READY, ActorRef.noSender());
 
         stateMachine.tell(OrderMessage.builder()
                         .event(OrderEvent.READY)
                         .addVariable(DELIVERY_TYPE, MAIL)
                         .build(),
-                null);
+                ActorRef.noSender());
 
-        stateMachine.tell(OrderEvent.COMPLETE, null);
+        stateMachine.tell(OrderEvent.COMPLETE, ActorRef.noSender());
 
-        stateMachine.tell(OrderEvent.FULFILL, null);
+        stateMachine.tell(OrderEvent.FULFILL, ActorRef.noSender());
     }
 }
