@@ -1,14 +1,12 @@
 package com.epam.sm.example.akka;
 
+import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
+
 import akka.actor.AbstractFSM;
 import com.epam.sm.example.model.DeliveryType;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-
-import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
 
 @Slf4j
 public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
@@ -25,7 +23,7 @@ public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
                 matchEventEquals(OrderEvent.PAY, (event, data) -> goTo(OrderState.PAID))
                         .eventEquals(OrderEvent.CANCEL, (event, data) -> goTo(OrderState.CANCELLED)));
 
-        when(OrderState.PAID, Duration.ZERO, matchAnyEvent((event, data) -> goTo(OrderState.PROCESSING)));
+        when(OrderState.PAID, matchAnyEvent((event, data) -> goTo(OrderState.PROCESSING)));
 
         when(OrderState.PROCESSING,
                 matchEvent(OrderMessage.class,
