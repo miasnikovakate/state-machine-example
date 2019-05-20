@@ -5,10 +5,16 @@ import com.epam.sm.example.model.OrderState;
 import org.squirrelframework.foundation.fsm.impl.AbstractStateMachine;
 
 public class SquirrelStateMachine
-        extends AbstractStateMachine<SquirrelStateMachine, OrderState, OrderEvent, SquirrelStateMachineContext> {
+        extends AbstractStateMachine<SquirrelStateMachine,
+                                            OrderState,
+                                            OrderEvent,
+                                            SquirrelStateMachineContext> {
 
-    public void submitAction(OrderState from, OrderState to, OrderEvent event, SquirrelStateMachineContext context) {
-        context.getOrder()
-                .setReadOnly(true);
-    }
+public void submitAction(OrderState from,
+                         OrderState to,
+                         OrderEvent event,
+                         SquirrelStateMachineContext context) {
+    context.getOrder()
+            .setReadOnly(true);
+}
 }

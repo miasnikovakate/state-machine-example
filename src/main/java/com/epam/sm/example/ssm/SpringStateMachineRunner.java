@@ -1,9 +1,5 @@
 package com.epam.sm.example.ssm;
 
-import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
-import static com.epam.sm.example.model.Constants.ORDER_PARAMETER;
-import static com.epam.sm.example.model.DeliveryType.SERVICE;
-
 import com.epam.sm.example.model.Order;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
@@ -17,41 +13,48 @@ import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.stereotype.Component;
 
+import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
+import static com.epam.sm.example.model.Constants.ORDER_PARAMETER;
+import static com.epam.sm.example.model.DeliveryType.SERVICE;
+
 @Slf4j
 @Profile("ssm")
 @Component
 @RequiredArgsConstructor
 public class SpringStateMachineRunner implements CommandLineRunner {
 
-    private final StateMachineFactory<OrderState, OrderEvent> stateMachineFactory;
+private final
+StateMachineFactory<OrderState, OrderEvent>
+        stateMachineFactory;
 
-    @Override
-    public void run(String... args) {
-        runSpringStateMachine();
-    }
+@Override
+public void run(String... args) {
+    runSpringStateMachine();
+}
 
-    private void runSpringStateMachine() {
-        log.info("---Spring State Machine---");
-        StateMachine<OrderState, OrderEvent> stateMachine =
-                stateMachineFactory.getStateMachine();
+private void runSpringStateMachine() {
+    log.info("---Spring State Machine---");
+    StateMachine<OrderState, OrderEvent> stateMachine =
+            stateMachineFactory.getStateMachine();
 
-        final Order order = new Order()
-                .setTotalSum(100);
-        stateMachine.getExtendedState()
-                .getVariables()
-                .put(ORDER_PARAMETER, order);
-        stateMachine.sendEvent(OrderEvent.SUBMIT);
+    final Order order = new Order()
+                                .setTotalSum(100);
+    stateMachine.getExtendedState()
+            .getVariables()
+            .put(ORDER_PARAMETER, order);
+    stateMachine.sendEvent(OrderEvent.SUBMIT);
 
-        stateMachine.sendEvent(OrderEvent.PAY);
+    stateMachine.sendEvent(OrderEvent.PAY);
 
-        Message<OrderEvent> readyMessage = MessageBuilder
-                .withPayload(OrderEvent.READY)
-                .setHeader(DELIVERY_TYPE, SERVICE)
-                .build();
-        stateMachine.sendEvent(readyMessage);
+    Message<OrderEvent> readyMessage =
+            MessageBuilder
+                    .withPayload(OrderEvent.READY)
+                    .setHeader(DELIVERY_TYPE, SERVICE)
+                    .build();
+    stateMachine.sendEvent(readyMessage);
 
-        stateMachine.sendEvent(OrderEvent.COMPLETE);
+    stateMachine.sendEvent(OrderEvent.COMPLETE);
 
-        stateMachine.sendEvent(OrderEvent.FULFILL);
-    }
+    stateMachine.sendEvent(OrderEvent.FULFILL);
+}
 }
