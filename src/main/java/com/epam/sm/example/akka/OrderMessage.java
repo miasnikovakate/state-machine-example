@@ -6,8 +6,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ToString
 @Getter
@@ -29,7 +29,7 @@ public class OrderMessage {
         private Map<String, Object> contextVariables;
 
         OrderMessageBuilder() {
-            contextVariables = new HashMap<>();
+            contextVariables = new ConcurrentHashMap<>();
         }
 
         public OrderMessageBuilder addVariable(String key, Object var) {

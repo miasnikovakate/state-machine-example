@@ -1,20 +1,22 @@
 package com.epam.sm.example.squirrel;
 
 import com.epam.sm.example.model.DeliveryType;
+import com.epam.sm.example.model.Order;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.squirrelframework.foundation.fsm.AnonymousCondition;
+import org.squirrelframework.foundation.fsm.Condition;
 import org.squirrelframework.foundation.fsm.StateMachineBuilder;
 import org.squirrelframework.foundation.fsm.StateMachineBuilderFactory;
 
 import javax.annotation.PostConstruct;
 import java.util.Objects;
 
-import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
-
 @Slf4j
+@Profile("squirrel")
 @Component
 public class SquirrelStateMachineFactory {
 
@@ -27,11 +29,12 @@ public class SquirrelStateMachineFactory {
                 OrderState.class,
                 OrderEvent.class,
                 SquirrelStateMachineContext.class);
+        configureSquirrelStateMachine();
     }
 
-    public SquirrelStateMachine getSquirrelStateMachine() {
+    private void configureSquirrelStateMachine() {
         builder.externalTransition()
-                .from(OrderState.CREATED).to(OrderState.SUBMITTED).on(OrderEvent.SUBMIT).callMethod("submitAction");
+                .from(OrderState.CREATED).to(OrderState.SUBMITTED).on(OrderEvent.SUBMIT).when(isOrderValid()).callMethod("submitAction");
 
         builder.externalTransition()
                 .from(OrderState.SUBMITTED).to(OrderState.PAID).on(OrderEvent.PAY);
@@ -46,7 +49,8 @@ public class SquirrelStateMachineFactory {
                 new AnonymousCondition<SquirrelStateMachineContext>() {
                     @Override
                     public boolean isSatisfied(SquirrelStateMachineContext context) {
-                        DeliveryType deliveryType = (DeliveryType) context.getVariable(DELIVERY_TYPE);
+                        log.error("context: {}", context);
+                        DeliveryType deliveryType = context.getDeliveryType();
                         return Objects.nonNull(deliveryType) && deliveryType == DeliveryType.MAIL;
                     }
                 });
@@ -56,7 +60,8 @@ public class SquirrelStateMachineFactory {
                 new AnonymousCondition<SquirrelStateMachineContext>() {
                     @Override
                     public boolean isSatisfied(SquirrelStateMachineContext context) {
-                        DeliveryType deliveryType = (DeliveryType) context.getVariable(DELIVERY_TYPE);
+                        log.error("context: {}", context);
+                        DeliveryType deliveryType = context.getDeliveryType();
                         return Objects.nonNull(deliveryType) && deliveryType == DeliveryType.SERVICE;
                     }
                 });
@@ -73,11 +78,28 @@ public class SquirrelStateMachineFactory {
 
         builder.externalTransition()
                 .from(OrderState.DELIVERED).to(OrderState.FULFILLED).on(OrderEvent.FULFILL);
+    }
 
+    public SquirrelStateMachine getSquirrelStateMachine() {
         SquirrelStateMachine squirrelStateMachine = builder.newStateMachine(OrderState.CREATED);
         squirrelStateMachine.addTransitionCompleteListener(event ->
                 log.info("State changed from {} to {}", event.getSourceState(), event.getTargetState())
         );
         return squirrelStateMachine;
+    }
+
+    private Condition<SquirrelStateMachineContext> isOrderValid() {
+        return new Condition<SquirrelStateMachineContext>() {
+            @Override
+            public boolean isSatisfied(SquirrelStateMachineContext context) {
+                Order order = context.getOrder();
+                return Objects.nonNull(order) && order.getTotalSum() > 0;
+            }
+
+            @Override
+            public String name() {
+                return "Is current order valid?";
+            }
+        };
     }
 }

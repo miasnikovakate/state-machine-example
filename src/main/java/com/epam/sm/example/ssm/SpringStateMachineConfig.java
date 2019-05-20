@@ -1,11 +1,16 @@
 package com.epam.sm.example.ssm;
 
+import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
+import static com.epam.sm.example.model.Constants.ORDER_PARAMETER;
+
 import com.epam.sm.example.model.DeliveryType;
+import com.epam.sm.example.model.Order;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
@@ -21,10 +26,10 @@ import java.util.EnumSet;
 import java.util.Objects;
 
 @Slf4j
+@Profile("ssm")
 @Configuration
 @EnableStateMachineFactory
 public class SpringStateMachineConfig extends EnumStateMachineConfigurerAdapter<OrderState, OrderEvent> {
-    public static final String DELIVERY_TYPE = "DELIVERY_TYPE";
 
     @Override
     public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent> config) throws Exception {
@@ -46,7 +51,7 @@ public class SpringStateMachineConfig extends EnumStateMachineConfigurerAdapter<
     @Override
     public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions) throws Exception {
         transitions.withExternal()
-                .source(OrderState.CREATED).target(OrderState.SUBMITTED).event(OrderEvent.SUBMIT).action(submitAction())
+                .source(OrderState.CREATED).target(OrderState.SUBMITTED).event(OrderEvent.SUBMIT).action(submitAction()).guard(isOrderValid())
                 .and()
                 .withExternal()
                 .source(OrderState.SUBMITTED).target(OrderState.PAID).event(OrderEvent.PAY)
@@ -83,6 +88,14 @@ public class SpringStateMachineConfig extends EnumStateMachineConfigurerAdapter<
     }
 
     @Bean
+    public Guard<OrderState, OrderEvent> isOrderValid() {
+        return stateContext -> {
+            Order order = (Order) stateContext.getExtendedState().getVariables().get(ORDER_PARAMETER);
+            return Objects.nonNull(order) && order.getTotalSum() > 0;
+        };
+    }
+
+    @Bean
     public Guard<OrderState, OrderEvent> isMailDeliveryType() {
         return stateContext -> {
             DeliveryType deliveryType = (DeliveryType) stateContext.getMessage().getHeaders().get(DELIVERY_TYPE);
@@ -112,7 +125,9 @@ public class SpringStateMachineConfig extends EnumStateMachineConfigurerAdapter<
 
     @Bean
     public Action<OrderState, OrderEvent> submitAction() {
-        return context -> {
+        return stateContext -> {
+            Order order = (Order) stateContext.getExtendedState().getVariables().get(ORDER_PARAMETER);
+            order.setReadOnly(true);
         };
     }
 

@@ -8,5 +8,7 @@ public class SquirrelStateMachine
         extends AbstractStateMachine<SquirrelStateMachine, OrderState, OrderEvent, SquirrelStateMachineContext> {
 
     public void submitAction(OrderState from, OrderState to, OrderEvent event, SquirrelStateMachineContext context) {
+        context.getOrder()
+                .setReadOnly(true);
     }
 }

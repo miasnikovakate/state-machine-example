@@ -1,8 +1,10 @@
 package com.epam.sm.example.akka;
 
-import static com.epam.sm.example.ssm.SpringStateMachineConfig.DELIVERY_TYPE;
+import static com.epam.sm.example.akka.UninitializedOrder.UNINITIALIZED_ORDER;
+import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
 
 import akka.actor.AbstractFSM;
+import akka.japi.pf.UnitMatch;
 import com.epam.sm.example.model.DeliveryType;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
@@ -12,11 +14,21 @@ import lombok.extern.slf4j.Slf4j;
 public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
 
     public AkkaStateMachine() {
-        startWith(OrderState.CREATED, new AkkaData() {
-        });
+        startWith(OrderState.CREATED, UNINITIALIZED_ORDER);
 
         when(OrderState.CREATED,
-                matchEventEquals(OrderEvent.SUBMIT, (event, data) -> goTo(OrderState.SUBMITTED)));
+                matchEvent(Double.class,
+                        UninitializedOrder.class,
+                        (event, data) -> stay()
+                                .using(OrderData.builder()
+                                        .totalSum(event)
+                                        .build())));
+
+        when(OrderState.CREATED,
+                matchEvent(OrderEvent.class,
+                        OrderData.class,
+                        (event, data) -> event == OrderEvent.SUBMIT && data.getTotalSum() > 0,
+                        (event, data) -> goTo(OrderState.SUBMITTED)));
         onTransition(matchState(OrderState.CREATED, OrderState.SUBMITTED, () -> submitAction(stateData())));
 
         when(OrderState.SUBMITTED,
@@ -56,11 +68,19 @@ public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
         when(OrderState.CANCELLED, NullFunction());
 
         whenUnhandled(matchAnyEvent((event, state) -> {
-            log.warn("event - {}, state - {}", event, stateName());
+            log.warn("Unhandled event - [{}] in state - [{}]", event, stateName());
             return stay();
         }));
     }
 
     private void submitAction(AkkaData data) {
+        final UnitMatch<AkkaData> m = UnitMatch.create(
+                matchData(OrderData.class,
+                        orderData -> getSender().tell(
+                                OrderData.builder()
+                                        .totalSum(orderData.getTotalSum())
+                                        .build(),
+                                getSelf())));
+        m.match(data);
     }
 }
