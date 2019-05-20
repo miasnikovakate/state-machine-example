@@ -49,7 +49,6 @@ public class SquirrelStateMachineFactory {
                 new AnonymousCondition<SquirrelStateMachineContext>() {
                     @Override
                     public boolean isSatisfied(SquirrelStateMachineContext context) {
-                        log.error("context: {}", context);
                         DeliveryType deliveryType = context.getDeliveryType();
                         return Objects.nonNull(deliveryType) && deliveryType == DeliveryType.MAIL;
                     }
@@ -60,7 +59,6 @@ public class SquirrelStateMachineFactory {
                 new AnonymousCondition<SquirrelStateMachineContext>() {
                     @Override
                     public boolean isSatisfied(SquirrelStateMachineContext context) {
-                        log.error("context: {}", context);
                         DeliveryType deliveryType = context.getDeliveryType();
                         return Objects.nonNull(deliveryType) && deliveryType == DeliveryType.SERVICE;
                     }
