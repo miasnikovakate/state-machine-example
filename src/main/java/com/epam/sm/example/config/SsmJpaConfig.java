@@ -19,7 +19,7 @@ import org.springframework.statemachine.service.StateMachineService;
 
 @Profile("ssm")
 @Configuration
-public class JpaConfig {
+public class SsmJpaConfig {
 
     @Bean
     public StateMachineRuntimePersister<OrderState, OrderEvent, String> stateMachineRuntimePersister(

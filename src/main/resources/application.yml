@@ -2,16 +2,14 @@ server:
   port: 8086
 
 spring:
-  profiles:
-    active: ssm
   datasource:
     driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/sm?currentSchema=ssm
+    url: jdbc:postgresql://localhost:5432/sm?currentSchema=sm
     username: postgres
     password:
   jpa:
-    default_schema: ssm
-#    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
+    default_schema: sm
+    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
     show-sql: true
     hibernate:
       ddl-auto: update
