@@ -37,6 +37,11 @@
             <artifactId>spring-statemachine-starter</artifactId>
             <version>${spring.state.machine.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.statemachine</groupId>
+            <artifactId>spring-statemachine-data-jpa</artifactId>
+            <version>${spring.state.machine.version}</version>
+        </dependency>
 
         <!-- Akka -->
         <dependency>
@@ -59,8 +64,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
 
         <!--Test-->

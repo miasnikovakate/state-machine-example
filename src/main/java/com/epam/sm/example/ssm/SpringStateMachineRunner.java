@@ -1,5 +1,9 @@
 package com.epam.sm.example.ssm;
 
+import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
+import static com.epam.sm.example.model.Constants.ORDER_PARAMETER;
+import static com.epam.sm.example.model.DeliveryType.SERVICE;
+
 import com.epam.sm.example.model.Order;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
@@ -11,11 +15,10 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
+import org.springframework.statemachine.service.StateMachineService;
 import org.springframework.stereotype.Component;
 
-import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
-import static com.epam.sm.example.model.Constants.ORDER_PARAMETER;
-import static com.epam.sm.example.model.DeliveryType.SERVICE;
+import java.util.UUID;
 
 @Slf4j
 @Profile("ssm")
@@ -23,38 +26,43 @@ import static com.epam.sm.example.model.DeliveryType.SERVICE;
 @RequiredArgsConstructor
 public class SpringStateMachineRunner implements CommandLineRunner {
 
-private final
-StateMachineFactory<OrderState, OrderEvent>
-        stateMachineFactory;
+    private final
+    StateMachineFactory<OrderState, OrderEvent>
+            stateMachineFactory;
 
-@Override
-public void run(String... args) {
-    runSpringStateMachine();
-}
+    private final
+    StateMachineService<OrderState, OrderEvent>
+            stateMachineService;
 
-private void runSpringStateMachine() {
-    log.info("---Spring State Machine---");
-    StateMachine<OrderState, OrderEvent> stateMachine =
-            stateMachineFactory.getStateMachine();
+    @Override
+    public void run(String... args) {
+        runSpringStateMachine();
+    }
 
-    final Order order = new Order()
-                                .setTotalSum(100);
-    stateMachine.getExtendedState()
-            .getVariables()
-            .put(ORDER_PARAMETER, order);
-    stateMachine.sendEvent(OrderEvent.SUBMIT);
+    private void runSpringStateMachine() {
+        String machineId = UUID.randomUUID().toString();
+        log.info("---Spring State Machine---");
+        StateMachine<OrderState, OrderEvent> stateMachine =
+                stateMachineFactory.getStateMachine();
 
-    stateMachine.sendEvent(OrderEvent.PAY);
+        final Order order = new Order()
+                .setTotalSum(100);
+        stateMachine.getExtendedState()
+                .getVariables()
+                .put(ORDER_PARAMETER, order);
+        stateMachine.sendEvent(OrderEvent.SUBMIT);
 
-    Message<OrderEvent> readyMessage =
-            MessageBuilder
-                    .withPayload(OrderEvent.READY)
-                    .setHeader(DELIVERY_TYPE, SERVICE)
-                    .build();
-    stateMachine.sendEvent(readyMessage);
+        stateMachine.sendEvent(OrderEvent.PAY);
 
-    stateMachine.sendEvent(OrderEvent.COMPLETE);
+        Message<OrderEvent> readyMessage =
+                MessageBuilder
+                        .withPayload(OrderEvent.READY)
+                        .setHeader(DELIVERY_TYPE, SERVICE)
+                        .build();
+        stateMachine.sendEvent(readyMessage);
 
-    stateMachine.sendEvent(OrderEvent.FULFILL);
-}
+        stateMachine.sendEvent(OrderEvent.COMPLETE);
+
+        stateMachine.sendEvent(OrderEvent.FULFILL);
+    }
 }

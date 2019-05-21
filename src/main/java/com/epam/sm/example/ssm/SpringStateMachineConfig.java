@@ -1,10 +1,14 @@
 package com.epam.sm.example.ssm;
 
+import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
+import static com.epam.sm.example.model.Constants.ORDER_PARAMETER;
+
 import com.epam.sm.example.model.DeliveryType;
 import com.epam.sm.example.model.Order;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -17,13 +21,11 @@ import org.springframework.statemachine.config.builders.StateMachineTransitionCo
 import org.springframework.statemachine.guard.Guard;
 import org.springframework.statemachine.listener.StateMachineListener;
 import org.springframework.statemachine.listener.StateMachineListenerAdapter;
+import org.springframework.statemachine.persist.StateMachineRuntimePersister;
 import org.springframework.statemachine.state.State;
 
 import java.util.EnumSet;
 import java.util.Objects;
-
-import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
-import static com.epam.sm.example.model.Constants.ORDER_PARAMETER;
 
 @Slf4j
 @Profile("ssm")
@@ -32,14 +34,19 @@ import static com.epam.sm.example.model.Constants.ORDER_PARAMETER;
 public class SpringStateMachineConfig
         extends EnumStateMachineConfigurerAdapter<OrderState, OrderEvent> {
 
+    @Autowired
+    private StateMachineRuntimePersister<OrderState, OrderEvent, String> stateMachinePersister;
+
 @Override
 public void configure(
         StateMachineConfigurationConfigurer<OrderState, OrderEvent> config)
         throws Exception {
     config
             .withConfiguration()
-            .autoStartup(true)
+            .autoStartup(false)
             .listener(logListener());
+    config.withPersistence()
+            .runtimePersister(stateMachinePersister);
 }
 
 @Override

@@ -1,2 +1,23 @@
 server:
   port: 8086
+
+spring:
+  profiles:
+    active: ssm
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/sm?currentSchema=ssm
+    username: postgres
+    password:
+  jpa:
+    default_schema: ssm
+#    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.lob.non_contextual_creation: true
