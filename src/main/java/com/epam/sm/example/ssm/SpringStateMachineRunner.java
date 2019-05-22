@@ -32,7 +32,7 @@ public void run(String... args) throws Exception {
     runSpringStateMachine();
 }
 
-private void runSpringStateMachine() throws InterruptedException {
+private void runSpringStateMachine() {
     log.info("---Spring State Machine---");
     StateMachine<OrderState, OrderEvent> stateMachine =
             stateMachineFactory.getStateMachine();

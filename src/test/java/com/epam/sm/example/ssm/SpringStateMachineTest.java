@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
@@ -50,6 +51,36 @@ public void testSubmitAction() {
 }
 
 @Test
+public void testFulfilAction() throws InterruptedException {
+    final StateMachine<OrderState, OrderEvent> stateMachine
+            = stateMachineFactory.getStateMachine();
+
+    final Order order = new Order()
+            .setTotalSum(100);
+    stateMachine.getExtendedState()
+            .getVariables()
+            .put(ORDER_PARAMETER, order);
+    stateMachine.sendEvent(OrderEvent.SUBMIT);
+
+    stateMachine.sendEvent(OrderEvent.PAY);
+
+    Thread.sleep(2000);
+
+    Message<OrderEvent> readyMessage =
+            MessageBuilder
+                    .withPayload(OrderEvent.READY)
+                    .setHeader(DELIVERY_TYPE, SERVICE)
+                    .build();
+    stateMachine.sendEvent(readyMessage);
+
+    stateMachine.sendEvent(OrderEvent.COMPLETE);
+
+    stateMachine.sendEvent(OrderEvent.FULFILL);
+
+    assertThat(stateMachine.getState().getId(), equalTo(OrderState.FULFILLED));
+}
+
+@Test
 public void testPlanSubmitAction() throws Exception {
     final StateMachine<OrderState, OrderEvent> stateMachine
             = stateMachineFactory.getStateMachine();
@@ -80,7 +111,7 @@ public void testPlanSubmitAction() throws Exception {
 }
 
 @Test
-public void testFulfilAction() throws Exception {
+public void testPlanFulfilAction() throws Exception {
     final StateMachine<OrderState, OrderEvent> stateMachine
             = stateMachineFactory.getStateMachine();
 
