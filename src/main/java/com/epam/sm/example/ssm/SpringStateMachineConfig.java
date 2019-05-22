@@ -49,8 +49,19 @@ public void configure(
     states
             .withStates()
             .initial(OrderState.CREATED)
+            .state(OrderState.PROCESSING, processingEntryAction(), processingExitAction())
             .states(EnumSet.allOf(OrderState.class))
             .choice(OrderState.DELIVERY_CHOICE);
+}
+
+@Bean
+public Action<OrderState, OrderEvent> processingEntryAction() {
+    return stateContext -> log.warn("Start processing order");
+}
+
+@Bean
+public Action<OrderState, OrderEvent> processingExitAction() {
+    return stateContext -> log.warn("Finish processing order");
 }
 
 @Override
@@ -80,6 +91,12 @@ public void configure(
             .withExternal()
             .source(OrderState.PAID)
             .target(OrderState.PROCESSING)
+
+            .and()
+            .withInternal()
+            .source(OrderState.PROCESSING)
+            .timer(500)
+            .action(processingOrder())
 
             .and()
             .withExternal()
@@ -126,12 +143,17 @@ public void configure(
 }
 
 @Bean
+public Action<OrderState, OrderEvent> processingOrder() {
+    return stateContext -> log.warn("Processing order...");
+}
+
+@Bean
 public Guard<OrderState, OrderEvent> isOrderValid() {
     return stateContext -> {
         Order order =
                 (Order) stateContext.getExtendedState()
-                                .getVariables()
-                                .get(ORDER_PARAMETER);
+                        .getVariables()
+                        .get(ORDER_PARAMETER);
         return Objects.nonNull(order) && order.getTotalSum() > 0;
     };
 }
@@ -141,10 +163,10 @@ public Guard<OrderState, OrderEvent> isMailDeliveryType() {
     return stateContext -> {
         DeliveryType deliveryType =
                 (DeliveryType) stateContext.getMessage()
-                                       .getHeaders()
-                                       .get(DELIVERY_TYPE);
+                        .getHeaders()
+                        .get(DELIVERY_TYPE);
         return Objects.nonNull(deliveryType)
-                       && deliveryType == DeliveryType.MAIL;
+                && deliveryType == DeliveryType.MAIL;
     };
 }
 
@@ -153,10 +175,10 @@ public Guard<OrderState, OrderEvent> isDeliveryServiceDeliveryType() {
     return stateContext -> {
         DeliveryType deliveryType =
                 (DeliveryType) stateContext.getMessage()
-                                       .getHeaders()
-                                       .get(DELIVERY_TYPE);
+                        .getHeaders()
+                        .get(DELIVERY_TYPE);
         return Objects.nonNull(deliveryType)
-                       && deliveryType == DeliveryType.SERVICE;
+                && deliveryType == DeliveryType.SERVICE;
     };
 }
 
@@ -180,8 +202,8 @@ public Action<OrderState, OrderEvent> submitAction() {
     return stateContext -> {
         Order order =
                 (Order) stateContext.getExtendedState()
-                                .getVariables()
-                                .get(ORDER_PARAMETER);
+                        .getVariables()
+                        .get(ORDER_PARAMETER);
         order.setReadOnly(true);
     };
 }

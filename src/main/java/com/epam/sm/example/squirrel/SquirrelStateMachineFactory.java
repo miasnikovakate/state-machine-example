@@ -7,10 +7,7 @@ import com.epam.sm.example.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import org.squirrelframework.foundation.fsm.AnonymousCondition;
-import org.squirrelframework.foundation.fsm.Condition;
-import org.squirrelframework.foundation.fsm.StateMachineBuilder;
-import org.squirrelframework.foundation.fsm.StateMachineBuilderFactory;
+import org.squirrelframework.foundation.fsm.*;
 
 import javax.annotation.PostConstruct;
 import java.util.Objects;
@@ -21,9 +18,9 @@ import java.util.Objects;
 public class SquirrelStateMachineFactory {
 
 private StateMachineBuilder<SquirrelStateMachine,
-                                   OrderState,
-                                   OrderEvent,
-                                   SquirrelStateMachineContext> builder;
+        OrderState,
+        OrderEvent,
+        SquirrelStateMachineContext> builder;
 
 @PostConstruct
 public void init() {
@@ -36,6 +33,8 @@ public void init() {
 }
 
 private void configureSquirrelStateMachine() {
+    builder.defineTimedState(OrderState.PROCESSING, 0, 500, OrderEvent.PROCESS, null);
+
     builder.externalTransition()
             .from(OrderState.CREATED)
             .to(OrderState.SUBMITTED)
@@ -56,7 +55,13 @@ private void configureSquirrelStateMachine() {
     builder.externalTransition()
             .from(OrderState.PAID)
             .to(OrderState.PROCESSING)
-            .on(OrderEvent.READY);
+            .on(OrderEvent.PROCESS);
+
+    builder.internalTransition()
+            .within(OrderState.PROCESSING)
+            .on(OrderEvent.PROCESS)
+            .when(Conditions.always())
+            .callMethod("processingOrder");
 
     builder.externalTransition()
             .from(OrderState.PROCESSING)
@@ -66,7 +71,7 @@ private void configureSquirrelStateMachine() {
                 public boolean isSatisfied(SquirrelStateMachineContext context) {
                     DeliveryType deliveryType = context.getDeliveryType();
                     return Objects.nonNull(deliveryType)
-                                   && deliveryType == DeliveryType.MAIL;
+                            && deliveryType == DeliveryType.MAIL;
                 }
             });
 
@@ -79,7 +84,7 @@ private void configureSquirrelStateMachine() {
                 public boolean isSatisfied(SquirrelStateMachineContext context) {
                     DeliveryType deliveryType = context.getDeliveryType();
                     return Objects.nonNull(deliveryType)
-                                   && deliveryType == DeliveryType.SERVICE;
+                            && deliveryType == DeliveryType.SERVICE;
                 }
             });
 

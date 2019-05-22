@@ -28,17 +28,17 @@ StateMachineFactory<OrderState, OrderEvent>
         stateMachineFactory;
 
 @Override
-public void run(String... args) {
+public void run(String... args) throws Exception {
     runSpringStateMachine();
 }
 
-private void runSpringStateMachine() {
+private void runSpringStateMachine() throws InterruptedException {
     log.info("---Spring State Machine---");
     StateMachine<OrderState, OrderEvent> stateMachine =
             stateMachineFactory.getStateMachine();
 
     final Order order = new Order()
-                                .setTotalSum(100);
+            .setTotalSum(100);
     stateMachine.getExtendedState()
             .getVariables()
             .put(ORDER_PARAMETER, order);

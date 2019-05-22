@@ -47,10 +47,11 @@ private void runAkkaStateMachine() {
 
     stateMachine.tell(OrderEvent.READY, ActorRef.noSender());
 
-    stateMachine.tell(OrderMessage.builder()
-                              .event(OrderEvent.READY)
-                              .addVariable(DELIVERY_TYPE, MAIL)
-                              .build(),
+    stateMachine.tell(
+            OrderMessage.builder()
+                    .event(OrderEvent.READY)
+                    .addVariable(DELIVERY_TYPE, MAIL)
+                    .build(),
             ActorRef.noSender());
 
     stateMachine.tell(OrderEvent.COMPLETE, ActorRef.noSender());
@@ -62,11 +63,11 @@ private static class SenderActor extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                       .matchAny(
-                               message ->
-                                       log.info("Received message from SM: {}",
-                                                 message))
-                       .build();
+                .matchAny(
+                        message ->
+                                log.info("Received message from SM: {}",
+                                        message))
+                .build();
     }
 }
 }

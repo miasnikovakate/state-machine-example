@@ -1,14 +1,16 @@
 package com.epam.sm.example.akka;
 
-import static com.epam.sm.example.akka.UninitializedOrder.UNINITIALIZED_ORDER;
-import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
-
 import akka.actor.AbstractFSM;
 import akka.japi.pf.UnitMatch;
 import com.epam.sm.example.model.DeliveryType;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.Duration;
+
+import static com.epam.sm.example.akka.UninitializedOrder.UNINITIALIZED_ORDER;
+import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
 
 @Slf4j
 public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
@@ -42,6 +44,20 @@ public AkkaStateMachine() {
 
     when(OrderState.PAID,
             matchAnyEvent((event, data) -> goTo(OrderState.PROCESSING)));
+    onTransition(
+            matchState(OrderState.PAID, OrderState.PROCESSING,
+                    () -> {
+                        log.warn("Start processing order");
+                        setTimer("processing", OrderEvent.PROCESS,
+                                Duration.ofMillis(500), true);
+                    })
+            .state(OrderState.PROCESSING,OrderState.PROCESSING,
+                    () -> log.warn("Processing order..."))
+            .state(OrderState.PROCESSING, null,
+                    () -> {
+                        log.warn("Finish processing order");
+                        cancelTimer("processing");
+                    }));
 
     when(OrderState.PROCESSING,
             matchEvent(OrderMessage.class,
@@ -61,7 +77,9 @@ public AkkaStateMachine() {
                             event.getOrderEvent() == OrderEvent.READY
                                     && event.getVariable(DELIVERY_TYPE)
                                                == DeliveryType.SHOP,
-                    (event, data) -> goTo(OrderState.DELIVERY_TO_SHOP)));
+                    (event, data) -> goTo(OrderState.DELIVERY_TO_SHOP))
+            .eventEquals(OrderEvent.PROCESS,
+                    (event, data) -> goTo(OrderState.PROCESSING)));
 
     when(OrderState.MAIL_DELIVERY,
             matchEventEquals(OrderEvent.COMPLETE,
