@@ -1,14 +1,14 @@
 package com.epam.sm.example.akka;
 
+import static com.epam.sm.example.akka.UninitializedOrder.UNINITIALIZED_ORDER;
+import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
+
 import akka.actor.AbstractFSM;
 import akka.japi.pf.UnitMatch;
 import com.epam.sm.example.model.DeliveryType;
 import com.epam.sm.example.model.OrderEvent;
 import com.epam.sm.example.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
-
-import static com.epam.sm.example.akka.UninitializedOrder.UNINITIALIZED_ORDER;
-import static com.epam.sm.example.model.Constants.DELIVERY_TYPE;
 
 @Slf4j
 public class AkkaStateMachine extends AbstractFSM<OrderState, AkkaData> {
@@ -82,6 +82,10 @@ public AkkaStateMachine() {
 
     when(OrderState.FULFILLED, NullFunction());
     when(OrderState.CANCELLED, NullFunction());
+
+    onTransition(
+            matchState(OrderState.DELIVERED, OrderState.FULFILLED,
+                    () -> getSender().tell("Order is fulfilled", getSelf())));
 
     whenUnhandled(matchAnyEvent((event, state) -> {
         log.warn("Unhandled event - [{}] in state - [{}]", event, stateName());
